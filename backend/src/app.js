@@ -10,12 +10,7 @@ app.use("/public", express.static("public"));
 app.use(bodyParser.json({ limit: "50mb" }));
 app.use(bodyParser.urlencoded({ extended: true, limit: "50mb" }));
 
-app.use(
-  cors({
-    origin: '*',
-    credentials: true,
-  })
-);
+app.use(cors());
 
 app.get("/", async (req, res) => {
   return res.status(200).json({ message: "Welcome to DevLabs Backend!" });
