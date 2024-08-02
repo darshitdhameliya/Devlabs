@@ -2,7 +2,7 @@ const app = require("./src/app");
 // const { connectToDB } = require("./src/config/database");
 require("dotenv").config();
 
-const port = process.env.PORT || 80;
+const port = process.env.PORT || 443;
 
 app.listen(port, async () => {
     // await connectToDB();
