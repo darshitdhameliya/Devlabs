@@ -3,6 +3,10 @@ const jwt = require("jsonwebtoken");
 const ExpressError = require("../config/ExpressError");
 const AWS = require('aws-sdk');
 
+AWS.config.update({
+    region: process.env.AWS_REGION || 'us-east-1'
+});
+
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const tableName =  process.env.UserTableName || "User";
 const toolTableName = process.env.ToolTableName || "Tool";
