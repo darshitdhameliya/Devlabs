@@ -1,5 +1,8 @@
-const mongoose = require("mongoose")
-const reviewForm = require("../models/reviewForm");
+const AWS = require('aws-sdk');
+
+const dynamoDB = new AWS.DynamoDB.DocumentClient();
+
+const tableName = process.env.ReviewFormTableName || "reviewForm";
 
 const {transporter, mailOptions} = require("../config/nodemailer");
 
@@ -14,7 +17,7 @@ const generateEmailText = (data) => {
     return text;
 }
 
-const generateEmailBody = ({name, email, review}) => {
+const generateEmailBody = ({ name, email, review }) => {
     const html = `
         <html>
             <body>
@@ -29,10 +32,10 @@ const generateEmailBody = ({name, email, review}) => {
 }
 
 const sendMail = async (req, res) => {
-    try{
+    try {
         const { name, email, review } = req.body;
         if (!name || !email || !review)
-            return res.status(400).json({ success:false, errors: ["Missing Data"] });
+            return res.status(400).json({ success: false, errors: ["Missing Data"] });
 
         await transporter.sendMail({
             ...mailOptions(email),
@@ -40,22 +43,20 @@ const sendMail = async (req, res) => {
             text: generateEmailText({ name, email, review }),
             html: generateEmailBody({ name, email, review })
         });
-        const newReview = new reviewForm({ 
-            name,
-            email,
-            msg: review,
-        });
-        console.log(newReview)
-        try {
-            await newReview.save();
-            //console.log("SAVED DATA")
-        } catch (error) {
-            //console.log("ERROR IS SAVING DATA")
-        }
+
+        const params = {
+            TableName: tableName,
+            Item: {
+                name,
+                email,
+                msg: review,
+            }
+        };
+
+        await dynamoDB.put(params).promise();
         return res.status(200).json({ success: true });
-    }
-    catch (error) {
-        console.log(error);
+    } catch (error) {
+        console.error(error);
         return res.status(500).json({ success: false, errors: ["Internal Server Error"] });
     }
 };

@@ -1,5 +1,7 @@
-const OpenSource = require("../models/OpenSource");
-require("dotenv").config();
+const AWS = require('aws-sdk');
+
+const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const tableName = process.env.OpenSourceTableName || "openSource";
 
 const addProject = async (req, res) => {
     try {
@@ -10,15 +12,19 @@ const addProject = async (req, res) => {
             return res.status(400).json({ success: false, errors: ["All fields are required"] });
         }
 
-        const newProject = await OpenSource.create({
-            projectName, ownerUsername, tags, link, description
-        });
+        const params = {
+            TableName: tableName,
+            Item: {
+                projectName,
+                ownerUsername,
+                tags,
+                link,
+                description
+            }
+        };
 
-        if (!newProject) {
-            return res.status(401).json({ success: false, errors: ["Issue Adding the Tool"] });
-        }
-
-        return res.status(201).json({ success: true, project: newProject });
+        await dynamoDB.put(params).promise();
+        return res.status(201).json({ success: true, project: params.Item });
     } catch (error) {
         console.error(error);
         return res.status(500).json({ success: false, errors: ["Internal Server Error"] });
@@ -28,11 +34,22 @@ const addProject = async (req, res) => {
 const fetchAllProjects = async (req, res) => {
     try {
         const { page = 1, limit = 10 } = req.query;
-        const openSourceProjects = await OpenSource.find()
-            .skip((page - 1) * limit)
-            .limit(limit);
+        const params = {
+            TableName: tableName,
+            Limit: limit,
+            ExclusiveStartKey: page > 1 ? { link: (page - 1) * limit } : undefined
+        };
 
-        const totalProjects = await OpenSource.countDocuments();
+        const data = await dynamoDB.scan(params).promise();
+        const openSourceProjects = data.Items;
+
+        const countParams = {
+            TableName: tableName,
+            Select: "COUNT"
+        };
+        const totalProjectsData = await dynamoDB.scan(countParams).promise();
+        const totalProjects = totalProjectsData.Count;
+
         return res.status(200).json({
             success: true,
             openSourceProjects,
