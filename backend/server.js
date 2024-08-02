@@ -1,9 +1,10 @@
 const app = require("./src/app");
-const { connectToDB } = require("./src/config/database");
+// const { connectToDB } = require("./src/config/database");
+require("dotenv").config();
 
-const port = process.env.PORT || 8000;
+const port = process.env.PORT || 80;
 
 app.listen(port, async () => {
-    await connectToDB();
+    // await connectToDB();
     console.log(`Application running on http://localhost:${port}\n`);
 })
