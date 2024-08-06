@@ -1,28 +1,10 @@
 const AWS = require('aws-sdk');
 
-const secretsManager = new AWS.SecretsManager();
-
-async function getSecretValue(secretName) {
-    try {
-        const data = await secretsManager.getSecretValue({ SecretId: secretName }).promise();
-        if ('SecretString' in data) {
-            return JSON.parse(data.SecretString);
-        }
-    } catch (err) {
-        console.error(err);
-    }
-}
-
-(async () => {
-    const secret = await getSecretValue('devlabs-aws-keys');
-    console.log(secret);
-})();
-
-AWS.config.update((async () => ({
+AWS.config.update({
     region: process.env.AWS_REGION || 'us-east-1',
-    accessKeyId: await process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: await process.env.AWS_SECRET_ACCESS_KEY
-}))());
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+});
 
 const dynamoDB = new AWS.DynamoDB.DocumentClient();
 const tableName = process.env.OpenSourceTableName || "openSource";
